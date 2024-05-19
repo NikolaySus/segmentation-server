@@ -1,0 +1,12 @@
+services:
+  service:
+    ports:
+      - '${SERVICE_PORT:?error}:${SERVICE_PORT:?error}'
+    build:
+      context: .
+      args:
+        - service=service
+      dockerfile: Dockerfile
+    environment:
+      - port=${SERVICE_PORT:?error}
+      - channelURL=${CHANNEL_URL:?error}
