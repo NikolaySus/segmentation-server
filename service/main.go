@@ -59,7 +59,7 @@ func (s *Service) Send(c *gin.Context) {
             return
         }
         log.Print("sending json: ", string(payload))
-        resp, err := http.Post(s.channelURL + "/transfer", "application/json", bytes.NewReader(payload))
+        resp, err := http.Post(s.channelURL + "/code", "application/json", bytes.NewReader(payload))
         if err != nil {
             log.Fatal("channel service unavailable: ", err)
             c.AbortWithStatus(http.StatusInternalServerError)
