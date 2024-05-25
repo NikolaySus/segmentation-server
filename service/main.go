@@ -3,6 +3,7 @@ package main
 import (
     "bytes"
     "context"
+    "encoding/base64"
     "encoding/json"
     "io"
     "log"
@@ -34,13 +35,14 @@ func New(channelURL string) (*Service, error) {
 }
 
 func (s *Service) Send(c *gin.Context) {
-    data, err := io.ReadAll(c.Request.Body)
+    dataRaw, err := io.ReadAll(c.Request.Body)
     if err != nil {
         log.Fatal("failed to read message:", err)
         c.AbortWithStatus(http.StatusInternalServerError)
         return
     }
-    log.Println("incoming message: ", string(data))
+    log.Println("incoming message: ", string(dataRaw))
+    data := base64.StdEncoding.EncodeToString(dataRaw)
     start := 0
     counter := 0
     size := len(data)
@@ -48,7 +50,7 @@ func (s *Service) Send(c *gin.Context) {
     now := time.Now().Format(time.RFC3339Nano)
     for ; start < size; start += SEGMENT_BYTES_CNT {
         var sgt Sgt
-        sgt.Payload = string(data[start:min(start + SEGMENT_BYTES_CNT, size)])
+        sgt.Payload = data[start:min(start + SEGMENT_BYTES_CNT, size)]
         sgt.Time = now
         sgt.SegmentsCount = segmentsCount
         sgt.SegmentNum = counter
@@ -59,7 +61,7 @@ func (s *Service) Send(c *gin.Context) {
             return
         }
         log.Print("sending json: ", string(payload))
-        resp, err := http.Post(s.channelURL + "/code", "application/json", bytes.NewReader(payload))
+        resp, err := http.Post(s.channelURL, "application/json", bytes.NewReader(payload))
         if err != nil {
             log.Fatal("channel service unavailable: ", err)
             c.AbortWithStatus(http.StatusInternalServerError)
